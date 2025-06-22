@@ -18,6 +18,6 @@ The project is being built module by module, with a focus on creating a clean, t
 Bencoding is a way to specify and organize data in a terse format. It supports the following types: byte strings, integers, lists, and dictionaries.
 
 ## Resources
-1. BitTorrent unofficial [spec|https://wiki.theory.org/BitTorrentSpecification]
-2. Awesome [blog|https://blog.jse.li/posts/torrent/]
-3. Another awesome [blog|http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/]
+1. BitTorrent unofficial [spec](https://wiki.theory.org/BitTorrentSpecification)
+2. Awesome [blog](https://blog.jse.li/posts/torrent/)
+3. Another awesome [blog](http://www.kristenwidman.com/blog/33/how-to-write-a-bittorrent-client-part-1/)
