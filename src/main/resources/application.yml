@@ -1,3 +1,14 @@
 micronaut:
   application:
     name: bittorrent
+  server:
+    port: 8089
+    netty:
+      access-logger:
+        enabled: true
+        logger-name: access-logger
+        log-format: combined
+
+logger:
+  levels:
+    io.micronaut.http.server.netty.access.AccessLogger: TRACE

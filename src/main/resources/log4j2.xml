@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="DEBUG">
+<Configuration status="WARN">
     <Appenders>
         <Console name="LogToConsole" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="com.krishna.kota" level="debug" additivity="false">
+        <Logger name="com.krishna.kota" level="DEBUG" additivity="false">
             <AppenderRef ref="LogToConsole"/>
         </Logger>
-        <Root level="error">
+        <Logger name="io.micronaut.http.server.netty.access.AccessLogger" level="TRACE" additivity="false">
+            <AppenderRef ref="LogToConsole"/>
+        </Logger>
+        <Logger name="io.micronaut.http.server.netty.access" level="TRACE" additivity="false">
+            <AppenderRef ref="LogToConsole"/>
+        </Logger>
+        <Root level="INFO">
             <AppenderRef ref="LogToConsole"/>
         </Root>
     </Loggers>
