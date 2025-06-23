@@ -1,5 +1,6 @@
 package com.krishna.kota.bencode.encode;
 
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ import java.util.TreeMap;
  * This class provides methods to convert Java Strings, Integers, Lists, and Maps
  * into their Bencode byte representation, commonly used in BitTorrent files.
  */
+@Singleton
 public class Bencoder implements IBencoder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Bencoder.class);
@@ -46,6 +48,7 @@ public class Bencoder implements IBencoder {
      * @throws IOException if an I/O error occurs during writing to the stream,
      *                     or if the data type of the object is not supported for encoding.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public void encode(Object data, OutputStream outputStream) throws IOException {
         switch (data) {

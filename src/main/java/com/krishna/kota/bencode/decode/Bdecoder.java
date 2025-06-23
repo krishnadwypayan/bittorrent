@@ -5,6 +5,7 @@ import com.krishna.kota.bencode.type.impl.BencInteger;
 import com.krishna.kota.bencode.type.impl.BencList;
 import com.krishna.kota.bencode.type.impl.BencMap;
 import com.krishna.kota.bencode.type.impl.BencString;
+import jakarta.inject.Singleton;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -20,6 +21,7 @@ import java.util.Map;
  * Bencode strings, integers, lists, and dictionaries into their corresponding
  * object representations.
  */
+@Singleton
 public class Bdecoder implements IBdecoder {
 
     private static final int STRING_DELIMITER = ':';

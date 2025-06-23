@@ -3,6 +3,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.6"
     id("com.google.cloud.tools.jib") version "2.8.0"
     id("io.micronaut.aot") version "4.5.3"
+    id 'jacoco'
 }
 
 version = "0.1"
@@ -20,11 +21,10 @@ dependencies {
     implementation("io.micronaut.serde:micronaut-serde-jackson")
     implementation("org.apache.logging.log4j:log4j-api")
     implementation platform("org.apache.logging.log4j:log4j-bom:2.24.2")
-    compileOnly("io.micronaut:micronaut-http-client")
     runtimeOnly("org.apache.logging.log4j:log4j-core")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl")
     runtimeOnly("org.yaml:snakeyaml")
-    testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation("org.mockito:mockito-core")
 }
 
 
@@ -35,7 +35,9 @@ java {
     sourceCompatibility = JavaVersion.toVersion("21")
     targetCompatibility = JavaVersion.toVersion("21")
 }
-
+jacoco {
+    toolVersion = "0.8.12"
+}
 
 tasks {
     jib {
@@ -44,6 +46,64 @@ tasks {
         }
     }
 }
+
+tasks.named("jacocoTestReport", JacocoReport) {
+    // The report is generated after the tests have run
+    dependsOn(tasks.named("test", Test))
+
+    reports {
+        xml.required.set(true)  // For CI/CD systems like SonarQube
+        csv.required.set(false)
+        html.required.set(true) // For human-readable reports
+    }
+
+    // This is the most important part: specifying what to include and exclude
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, exclude: [
+                // Exclude the main application class, as it's usually just a bootstrap
+                '**/Application.class',
+                // Exclude Micronaut's generated bean definitions and interceptors
+                '**/*$Definition.class',
+                '**/*$Intercepted.class',
+                // Exclude Micronaut AOT generated code
+                '**/aot/**'
+        ])
+    }))
+}
+
+tasks.named("jacocoTestCoverageVerification", JacocoCoverageVerification) {
+    // CRITICAL: The verification task must run AFTER the report is generated
+    // It uses the execution data from the test task.
+    dependsOn(tasks.named("jacocoTestReport"))
+
+    violationRules {
+        rule {
+            // This rule applies to the whole project bundle
+            limit {
+                // Use a decimal for clarity (e.g., 0.90 for 90%)
+                minimum = 0.90
+            }
+        }
+        rule {
+            element = 'CLASS'
+            // You can exclude multiple classes
+            excludes = [
+                    'example.micronaut.Application',
+                    // Also exclude Micronaut generated classes from class-level rules
+                    '**.*$Definition',
+                    '**.*$Intercepted'
+            ]
+            limit {
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("jacocoTestReport"))
+}
+
 graalvmNative.toolchainDetection = false
 
 micronaut {
@@ -63,7 +123,7 @@ micronaut {
         optimizeClassLoading = true
         deduceEnvironment = true
         optimizeNetty = true
-        replaceLogbackXml = true
+        replaceLogbackXml = false
     }
 }
 
