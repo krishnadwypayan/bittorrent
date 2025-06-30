@@ -6,3 +6,6 @@ pluginManagement {
 }
 
 rootProject.name = "bittorrent"
+
+include 'bittorrent-bencode'
+include 'bittorrent-tracker'

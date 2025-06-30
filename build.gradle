@@ -1,52 +1,137 @@
 plugins {
-    id("io.micronaut.application") version "4.5.3"
-    id("com.gradleup.shadow") version "8.3.6"
-    id("com.google.cloud.tools.jib") version "2.8.0"
-    id("io.micronaut.aot") version "4.5.3"
+    id("java")
     id 'jacoco'
+    id("io.micronaut.application") version "4.4.4"
+}
+
+micronaut {
+    version("4.6.3")
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("com.krishna.kota.*")
+    }
 }
 
 version = "0.1"
 group = "com.krishna.kota"
+description = "BitTorrent client implementation"
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    annotationProcessor("io.micronaut:micronaut-http-validation")
-    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
-    implementation("io.micronaut:micronaut-http-server-netty")
-    implementation("io.micronaut.reactor:micronaut-reactor")
-    implementation("io.micronaut.reactor:micronaut-reactor-http-client")
-    implementation("io.micronaut.serde:micronaut-serde-jackson")
-    implementation("org.apache.logging.log4j:log4j-api")
-    implementation platform("org.apache.logging.log4j:log4j-bom:2.24.2")
-    runtimeOnly("org.apache.logging.log4j:log4j-core")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl")
-    runtimeOnly("org.yaml:snakeyaml")
-    testImplementation("org.mockito:mockito-core")
-}
-
-
-application {
-    mainClass = "com.krishna.kota.Application"
-}
 java {
     sourceCompatibility = JavaVersion.toVersion("21")
     targetCompatibility = JavaVersion.toVersion("21")
 }
+
 jacoco {
     toolVersion = "0.8.12"
 }
 
-tasks {
-    jib {
-        to {
-            image = "gcr.io/myapp/jib-image"
+test {
+    useJUnitPlatform()
+}
+
+// Centralized configuration for all projects
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    
+    repositories {
+        mavenCentral()
+    }
+    
+    // Configure JaCoCo for all projects
+    jacoco {
+        toolVersion = "0.8.12"
+    }
+    
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+    
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            xml.required.set(true)
+            csv.required.set(false)
+            html.required.set(true)
         }
     }
+    
+    // Shared logging configuration setup
+    task copySharedLoggingConfig(type: Copy) {
+        from "${rootProject.projectDir}/config/log4j2.xml"
+        into "${project.buildDir}/resources/main"
+        
+        // Ensure the destination directory exists
+        doFirst {
+            file("${project.buildDir}/resources/main").mkdirs()
+        }
+    }
+    
+    // Task to copy shared log4j2.xml to test resources as well
+    task copySharedLoggingConfigTest(type: Copy) {
+        from "${rootProject.projectDir}/config/log4j2.xml"
+        into "${project.buildDir}/resources/test"
+        
+        // Ensure the destination directory exists
+        doFirst {
+            file("${project.buildDir}/resources/test").mkdirs()
+        }
+    }
+    
+    // Make the copy tasks run automatically during build
+    tasks.named('processResources') {
+        dependsOn copySharedLoggingConfig
+    }
+    
+    tasks.named('processTestResources') {
+        dependsOn copySharedLoggingConfigTest
+    }
+    
+    // Also ensure the tasks run before compilation
+    tasks.named('compileJava') {
+        dependsOn copySharedLoggingConfig
+    }
+    
+    tasks.named('compileTestJava') {
+        dependsOn copySharedLoggingConfigTest
+    }
+    
+    dependencies {
+        // Micronaut BOM for version management
+        implementation platform("io.micronaut.platform:micronaut-platform:4.6.3")
+        
+        // Micronaut Core dependencies
+        implementation("io.micronaut:micronaut-inject")
+        implementation("io.micronaut:micronaut-runtime")
+        
+        // YAML support for application.yml configuration
+        runtimeOnly("org.yaml:snakeyaml")
+        
+        // Jakarta Inject API for dependency injection annotations (@Singleton, @Inject)
+        implementation 'jakarta.inject:jakarta.inject-api:2.0.1'
+        
+        // SLF4J API for logging
+        implementation 'org.slf4j:slf4j-api:2.0.16'
+        
+        // Annotation processors
+        annotationProcessor("io.micronaut:micronaut-inject-java:4.6.3")
+        
+        // Test dependencies
+        testImplementation("io.micronaut.test:micronaut-test-junit5")
+        testImplementation 'org.mockito:mockito-core:5.14.2'
+        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+        testAnnotationProcessor("io.micronaut:micronaut-inject-java:4.6.3")
+    }
 }
+
 
 tasks.named("jacocoTestReport", JacocoReport) {
     // The report is generated after the tests have run
@@ -105,32 +190,5 @@ tasks.named("check") {
     dependsOn(tasks.named("jacocoTestReport"))
 }
 
-graalvmNative.toolchainDetection = false
-
-micronaut {
-    runtime("netty")
-    testRuntime("junit5")
-    processing {
-        incremental(true)
-        annotations("com.krishna.kota.*")
-    }
-    aot {
-        // Please review carefully the optimizations enabled below
-        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
-        optimizeServiceLoading = false
-        convertYamlToJava = false
-        precomputeOperations = true
-        cacheEnvironment = true
-        optimizeClassLoading = true
-        deduceEnvironment = true
-        optimizeNetty = true
-        replaceLogbackXml = false
-    }
-}
-
-
-tasks.named("dockerfileNative") {
-    jdkVersion = "21"
-}
 
 

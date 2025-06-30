@@ -13,3 +13,9 @@ out/
 .settings
 .classpath
 .factorypath
+*.class
+
+# Micronaut generated files in bin directories
+**/bin/default/META-INF/
+**/bin/test/META-INF/
+**/bin/main/META-INF/
